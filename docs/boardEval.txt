@@ -1,0 +1,25 @@
+Board evaluation functions
+
+int numberOfMerges(direction_t dir)	// Evaluate the number of merges in dir
+(int or direction_t) highValueQuadrant()	// Find the quadrant that has highest average value
+bool rowIsFull(int row)	// Return true if row has all non-zero entries, false otherwise
+bool columnIsFull(int col)	// Return true if column has all non-zero entries, false otherwise
+int highValueRow()	// return 0-3 for row which holds highest value
+int highValueColumn() // return 0 - 3 for column which holds highest value column
+bool rowCanMerge(int row) // return true of row can merge, false otherwise
+bool columnCanMerge(int col)
+direction_t rowOrder()	// return LEFT if row is ordered left, RIGHT if row is ordered right, NONE if there is no order
+direction_t columnOrder()
+bool isGridlocked()	// Return true if board has n rows totally filled and 4-n rows totally empty with no merges possible
+
+
+
+bool squareIsBlocked(int pos)	// Return true if all adjacent values are greater than val(pos) (this includes any edge squares)
+int emptySquares();
+
+int getDangerLevel();	// This will act as an evaluation of how careful the AI should be
+int evaluatePosition();	// similar to getDangerLevel() -- put in AI
+
+/* Forcasting methods */
+board_2048 forcast(direction_t dir);	// 
+

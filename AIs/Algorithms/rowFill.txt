@@ -1,0 +1,14 @@
+rowFill algorithm
+
+OVERVIEW
+1. Fill top row with left being largest.
+2. Fill second row with right being the largest.
+2a. If can merge up, do so, begin at top
+3. Etc
+
+ALGORITHM
+
+1.	Check if row is ordered left and is filled
+	1a.	If so, check if the next row is ordered right and filled
+
+
