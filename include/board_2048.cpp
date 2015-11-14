@@ -4,7 +4,6 @@
 
 board_2048::board_2048(){
 	srand(time(NULL));
-	board = new unsigned int[boardsize];
 	for (int i = 0; i < boardsize; i++)
 		board[i] = 0;
 	score = 0;
@@ -12,22 +11,20 @@ board_2048::board_2048(){
 
 board_2048::board_2048(unsigned int* entries) {
 	srand(time(NULL));
-	board = new unsigned int[boardsize];
-	for (int i = 0; i < boardsize; i++) 
+	for (int i = 0; i < boardsize; i++)
 		board[i] = entries[i];
 	score = 0;
 }
 
 board_2048::board_2048(const board_2048& b) {
 	srand(time(NULL));
-	board = new unsigned int[boardsize];
 	for (int i = 0; i < boardsize; i++)
 		board[i] = b.getValAtPos(i);
 	score = b.getScore();
 }
 
 board_2048::~board_2048(){
-	delete[] board;
+
 }
 
 /*** Misc ***/
@@ -56,7 +53,7 @@ bool board_2048::isValidPos(int pos) const {
 }
 
 bool board_2048::posAtEdge(int pos, direction_t dir) const {
-	if (! isValidPos(pos)) return false; 
+	if (! isValidPos(pos)) return false;
 	switch (dir) {
 		case NONE:			// Nonsense
 			return false;
@@ -89,11 +86,11 @@ bool board_2048::dirHoldsSameVal(int pos, direction_t dir) const {
 		 *		if YES: continue to next square (via for-looop)
 		 *		if NO: return false;
 		 */
-		if (! isValidPos(pos + i*dir)) 
+		if (! isValidPos(pos + i*dir))
 			return false;
 		if (getValAtPos(pos + i*dir) == getValAtPos(pos))
 			return true;
-		if (getValAtPos(pos + i*dir) != 0) 
+		if (getValAtPos(pos + i*dir) != 0)
 			return false;
 	}
 	return false;
@@ -120,21 +117,21 @@ bool board_2048::posHasMove(int pos) const {
 	// Check DOWN
 	if (dirIsValid(pos, DOWN)) return true;
 	// Check LEFT
-	return (dirIsValid(pos,LEFT));	
+	return (dirIsValid(pos,LEFT));
 }
 
 bool board_2048::isValidMove(direction_t dir) const {
 	for (int pos = 0; pos < boardsize; pos++)
-		if ( dirIsValid(pos, dir) && getValAtPos(pos) != 0) 
+		if ( dirIsValid(pos, dir) && getValAtPos(pos) != 0)
 			return true;
 		return false;
-}	
+}
 
 
 bool board_2048::hasMove() const {	// NEED TO FINISH!!!!!!!!!!!!!!1
 	if (! this->boardIsFull()) return true;
 	// Board is full -- check if there is a valid move
-	for (int pos = 0; pos < boardsize; pos++) 
+	for (int pos = 0; pos < boardsize; pos++)
 		if (posHasMove(pos))return true;
 	return false;
 }
@@ -167,7 +164,7 @@ array_t& board_2048::getPosOfEmpty() const {
 int board_2048::getHighestVal() const {
 	int highestValue = 0;
 	for (int i = 0; i < 16; i++) {
-		if (board[i] > highestValue) 
+		if (board[i] > highestValue)
 			highestValue = board[i];
 	}
 	return highestValue;
@@ -235,9 +232,9 @@ int board_2048::numberOfMerges(direction_t dir) const {
 				}
 			}
 		}
-		
+
 	}
-	
+
 	return numberOfMerges;
 }
 
@@ -252,7 +249,7 @@ direction_t board_2048::rowOrder(int row) const {
 	for (int i = 1; i < 4; i++) { // 3 comparisons are needed
 		// Check low to high first
 		if ( getVal(base + i) != 0 ){
-			if ( getVal(base + i) >= highest ) 
+			if ( getVal(base + i) >= highest )
 				highest = getVal(base + i);
 			else
 				isOrderedRight = false;
@@ -369,7 +366,7 @@ void board_2048::move(direction_t dir) {
 				pos += dir;
 			}
 			// Check to see if we can merge two squares
-			if ( isValidPos(pos + dir) && getVal(pos + dir) == getVal(i) 
+			if ( isValidPos(pos + dir) && getVal(pos + dir) == getVal(i)
 					&& ! posAtEdge(pos, dir) && ! alreadyMerged[pos + dir]) {
 				score += getVal(i) * 2;
 				setVal(pos + dir, getVal(i)*2);	// Double Value
@@ -386,4 +383,3 @@ void board_2048::move(direction_t dir) {
 	}
 	if(madeAMove) spawnNumber();
 }
-

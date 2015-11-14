@@ -25,4 +25,5 @@ int main() {
 		cout << b.posAtEdge(i, LEFT) << "  ";
 		if (i % 4 == 3) cout << endl << '\t';
 	}
+	
 }
