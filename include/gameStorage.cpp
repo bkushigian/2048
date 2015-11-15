@@ -2,7 +2,7 @@
 
 /* gamestate methods */
 gamestate::gamestate(array_t b, unsigned int s, direction_t m, gamestate* p, gamestate* n){
-      for (int pos = 0; pos < 15; ++pos) board[pos] = b[pos];
+      for (int pos = 0; pos < 15; ++pos) board[pos] = b.values[pos];
       score = s;
       move = m;
       prev = p;
@@ -11,13 +11,13 @@ gamestate::gamestate(array_t b, unsigned int s, direction_t m, gamestate* p, gam
 array_t gamestate::getBoard(){
    array_t result(16);
    for (int pos = 0; pos < 16; ++pos){
-      result.values[i] = board[i];
+      result.values[pos] = board[pos];
    }
    return result;
 }
 void gamestate::setBoard(array_t b){
    for (int pos = 0; pos < 16; ++pos){
-      board[i] = b[i];
+      board[pos] = b.values[pos];
    }
 }
 unsigned int gamestate::getScore(){
@@ -49,30 +49,31 @@ storedGame::storedGame(std::string fName){
 }
 
 void storedGame::parseFile(std::string fName){
-   ifstream f(fName);
-   string line;
+   std::ifstream f(fName.c_str());
+   std::string line;
    if (f.is_open()){
       while(getline(f,line)){
          if (line.length() > 0) {
-            if (line.at(0) != "#")
+            if (line.at(0) != '#')
                append(parseState(line));
          }
       }
    }
 }
 
-gamestate storedGame::parseState(std::string line) {
+gamestate* storedGame::parseState(std::string line) {
+   /* Unimplemented, testing compile for regex*/
    int n;      // move number
    array_t b(16);
    unsigned int s = 1234;
    direction_t m = UP;
-   string re_validLine = "^[0-9]+::\[[0-9]+(,[0-9]+){15}\]::[0-9]+::(UP|DOWN|LEFT|RIGHT)"
-   return gamestate(b,ss,m, NULL, NULL);
-
+   std::string re_validLine = "^[0-9]+::\\[[0-9]+(,[0-9]+){15}\\]::[0-9]+::(UP|DOWN|LEFT|RIGHT)";
+   gamestate* result = new gamestate(b,s,m,NULL,NULL);
+   return result;
 }
-storedgame::~storedGame(){
+storedGame::~storedGame(){
    if (head != NULL){
-      gamestate n = head->getNext();
+      gamestate* n = head->getNext();
       curr = head;
       while (n != NULL){
          delete curr;

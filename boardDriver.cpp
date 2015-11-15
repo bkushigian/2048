@@ -6,6 +6,7 @@
 #include <math.h>
 #include "include/board_2048.hpp"
 #include "include/array_t.hpp"
+#include "include/gameStorage.hpp"
 #include "AIs/AI.hpp"
 #include "AIs/basicAI_1.hpp"
 #include "AIs/rowFill.hpp"

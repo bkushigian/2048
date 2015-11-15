@@ -16,7 +16,7 @@ public:
    gamestate(){next = NULL; prev = NULL;}
    gamestate(array_t b, unsigned int s, direction_t m, gamestate* p, gamestate* n);
    array_t getBoard();
-   void setBoard(array_t& b);
+   void setBoard(array_t b);
    unsigned int getScore();
    void setScore(unsigned int s);
    gamestate* getNext();
@@ -44,7 +44,7 @@ public:
    ~storedGame();
    // file io
    void parseFile(std::string fName);
-   gamestate parseState(std::string line);
+   gamestate* parseState(std::string line);
    void writeToFile(std::string fName);
    // getters and setters
    gamestate* getHead(){return head;}
