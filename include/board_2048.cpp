@@ -1,4 +1,4 @@
-#include "board_2048.h"
+#include "board_2048.hpp"
 
 /*** 2048 Board Class ***/
 

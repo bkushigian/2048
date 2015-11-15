@@ -1,4 +1,4 @@
-#include "basicAI_2.h"
+#include "basicAI_2.hpp"
 
 direction_t basicAI_2::chooseMove(board_2048& board) {
 	moves++;

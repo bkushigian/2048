@@ -1,13 +1,14 @@
 #include <iostream>
-#include "include/board_2048.h"
-#include "include/array_t.h"
+#include <string.h>
 #include <ncurses.h>
 #include <sstream>
 #include <unistd.h>
 #include <math.h>
-#include "AIs/AI.h"
-#include "AIs/basicAI_1.h"
-#include "AIs/rowFill.h"
+#include "include/board_2048.hpp"
+#include "include/array_t.hpp"
+#include "AIs/AI.hpp"
+#include "AIs/basicAI_1.hpp"
+#include "AIs/rowFill.hpp"
 
 using namespace std;
 
@@ -53,8 +54,8 @@ void drawSquare(int pos, board_2048& b) {
 	init_pair(14, COLOR_MAGENTA, COLOR_CYAN);
 	init_pair(15, COLOR_BLUE, COLOR_MAGENTA);
 	init_pair(16, COLOR_GREEN, COLOR_BLUE);
-	
-	
+
+
 	// Find upper left corner
 	int y = y_0 + squareHeight * (pos / 4) + 1;
 	int x = x_0 + squareWidth * (pos % 4);
@@ -76,7 +77,7 @@ void drawSquare(int pos, board_2048& b) {
 		ss << b.getVal(pos);
 		int length = ss.str().length();
 		int diff = (squareWidth - length)/2;
-		
+
 		// Clear square to color
 		move(y,x + 1);
 		addstr( EMPTY_STRING );
@@ -87,7 +88,7 @@ void drawSquare(int pos, board_2048& b) {
 		move(y, x + 1);
 		for (int i = 0; i < diff - 1; i++)
 			addch(' ');
-		
+
 		addstr( (ss.str()).c_str() );
 
 		for (int i = 0; i < diff - 1; i++)
@@ -114,13 +115,13 @@ void drawBoard(board_2048& b) {
 	move(score_y + 1, score_x);
 	addstr( "HIGHSCORE: " );
 	addstr( ss.str().c_str());
-	
+
 	// Add GAme Number
 	ss.str("");
 	ss << "GAME NUMBER: " << gameNumber;
 	move(score_y + 2, score_x);
 	addstr(ss.str().c_str());
-	
+
 	attroff(COLOR_PAIR(1));
 	for (int j = 0; j < 5; j++) {
 		move(y_0 - 1 + squareHeight*j, x_0);
@@ -144,7 +145,7 @@ void drawBoard(board_2048& b) {
 			}
 			else
 				addch(ACS_VLINE);
-			
+
 		}
 	}
 	// Draw Corners
@@ -156,7 +157,7 @@ void drawBoard(board_2048& b) {
 	addch(ACS_LLCORNER);
 	move(y_0 + 4*squareHeight - 1, x_0 + 4 * squareWidth);
 	addch(ACS_LRCORNER);
-	
+
 	for (int i = 0; i < 16; i++) {
 		drawSquare(i, b);
 	}
@@ -169,11 +170,11 @@ void nCursesInit() {
 	noecho();
 	keypad(stdscr, TRUE);
 	start_color();
-	
+
 	EMPTY_STRING = new char[squareWidth];
 	for (int i = 0; i < squareWidth - 1; i++)
 		EMPTY_STRING[i] = ' ';
-} 
+}
 
 void initColorPairs() {
 	init_pair(1, COLOR_WHITE, COLOR_BLACK);
@@ -184,7 +185,7 @@ void initColorPairs() {
 	init_pair(6, COLOR_GREEN, COLOR_MAGENTA);
 	init_pair(7, COLOR_RED, COLOR_CYAN);
 	init_pair(8, COLOR_BLACK, COLOR_WHITE);
-	
+
 	//init_pair(9, COLOR_CYAN, COLOR_MAGENTA);
 	//init_pair(10, COLOR_MAGENTA, COLOR_BLUE);
 	//init_pair(11, COLOR_BLUE, COLOR_GREEN);
@@ -194,6 +195,7 @@ void initColorPairs() {
 	//init_pair(15, COLOR_BLUE, COLOR_MAGENTA);
 	//init_pair(16, COLOR_GREEN, COLOR_BLUE);
 }
+
 int main(int argc, const char* argv[]) {
 	board_2048 board = board_2048();
 	board_2048 board2 = board_2048(board);
@@ -204,6 +206,10 @@ int main(int argc, const char* argv[]) {
 	attron(COLOR_PAIR(3));
 	bool repeat = true;
 	char ch;
+
+	if (argc > 1 && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--human") == 0)))
+		usingAI = false;
+
 	// AI loop
 	if (usingAI) {
 		int currentScore;
@@ -232,16 +238,16 @@ int main(int argc, const char* argv[]) {
 					default:
 						addstr("NONE  ");
 						break;
-				}		
+				}
 				refresh();
 				usleep(SLEEP_TIME);
-				
+
 				board.move(d);
 				if (d == NONE) break;
 			}
 			drawBoard(board);
 			refresh();
-			
+
 		}
 		if (board.getScore() > highScore) highScore = board.getScore();
 		cout << highScore;

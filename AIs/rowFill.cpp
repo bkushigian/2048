@@ -1,4 +1,4 @@
-#include "rowFill.h"
+#include "rowFill.hpp"
 
 direction_t rowfillAI::chooseMove(board_2048& board) {
 	moves++;

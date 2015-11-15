@@ -1,6 +1,6 @@
-#include "AI.h"
+#include "AI.hpp"
 AI::AI(){
-	
+
 }
 AI::~AI(){}
 direction_t AI::chooseMove(board_2048& board) {

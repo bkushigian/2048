@@ -1,13 +1,14 @@
 #ifndef _ROWFILLAI_H
 #define _ROWFILLAI_H
 
-#include "AI.h"
-#include "../include/board_2048.h"
+#include "AI.hpp"
+#include "../include/board_2048.hpp"
 
-class rowfillAI : AI {
+class basicAI_2 : AI {
 private:
-	int moves = 0;
+	int moves;
 public:
+	basicAI_2(){moves = 0;}
 	direction_t chooseMove(board_2048& board);
 };
 

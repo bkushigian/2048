@@ -1,4 +1,4 @@
-#include "basicAI_1.h"
+#include "basicAI_1.hpp"
 
 basicAI_1::basicAI_1(){
 	lastMove = NONE;
@@ -8,7 +8,7 @@ direction_t basicAI_1::chooseMove(board_2048& board){
 		if (board.isValidMove(UP)) {lastMove = UP;return UP;}
 		lastMove = LEFT;
 		return LEFT;
-		
+
 	}
 	if (lastMove == UP || lastMove == DOWN) {
 		if (board.isValidMove(LEFT)) {
@@ -26,7 +26,7 @@ direction_t basicAI_1::chooseMove(board_2048& board){
 		lastMove = DOWN;
 		return DOWN;
 	}
-	
+
 	if (lastMove == LEFT){
 		if (board.isValidMove(RIGHT)){
 			lastMove = RIGHT;
@@ -43,7 +43,7 @@ direction_t basicAI_1::chooseMove(board_2048& board){
 		lastMove = DOWN;
 		return DOWN;
 	}
-	
+
 	if (lastMove == RIGHT){
 
 		if (board.isValidMove(UP)) {
@@ -61,5 +61,5 @@ direction_t basicAI_1::chooseMove(board_2048& board){
 		lastMove = DOWN;
 		return DOWN;
 	}
-	
+
 }

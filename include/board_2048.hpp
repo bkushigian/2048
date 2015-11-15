@@ -1,4 +1,4 @@
-#ifndef BOARD_2048
+#ifndef BOARD_2048 
 #define BOARD_2048
 
 //#define BOARD_DBG
@@ -6,7 +6,7 @@
 #include <iostream>
 #include <stdlib.h>			// rand(), srand()
 #include <time.h>			// to seed srand()
-#include "array_t.h"
+#include "array_t.hpp"
 
 // Some enums to pass to various helper functions
 enum direction_t {NONE = 0, UP   = -4,  DOWN   = 4,  LEFT   = -1, RIGHT   = 1,

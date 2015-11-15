@@ -1,7 +1,7 @@
 #ifndef _AI
 #define _AI
 
-#include "../include/board_2048.h"
+#include "../include/board_2048.hpp"
 
 class AI {
 public:

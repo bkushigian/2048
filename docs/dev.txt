@@ -1,0 +1,12 @@
+Current Dev Goals
+
+1) Game Storage Format. Can simply be a cast TSL of state 0 followed by a move
+   (UDLR), a generated location (0-15) and the value generated (2,4)
+
+2) Implement an option to store game (played by computer or human)
+
+3) Implement a game loader
+   -optionally a state to view
+   -optionally ability to fork the game (play from a position and save)
+   
+4) Implement a game viewer (to replay games)
