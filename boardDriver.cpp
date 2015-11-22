@@ -4,12 +4,18 @@
 #include <sstream>
 #include <unistd.h>
 #include <math.h>
+#include <stdlib.h>								// exit()
+
 #include "include/board_2048.hpp"
-#include "include/array_t.hpp"
+#include "include/board_t.hpp"
 #include "include/gameStorage.hpp"
+#include "include/direction_t.hpp"
+#include "include/gamestate.hpp"
+
 #include "AIs/AI.hpp"
 #include "AIs/basicAI_1.hpp"
 #include "AIs/rowFill.hpp"
+
 
 using namespace std;
 
@@ -21,22 +27,41 @@ int HEIGHT = 4 * squareHeight + 2 * y_0;
 int score_y = 2, score_x = WIDTH/2;
 
 int highScore = 0;
-int numberOfGames = 100;
+int numberOfGames = 1;
 
 int gameNumber = 0;
 
-unsigned int SLEEP_TIME = 100000;
+unsigned int sleeptime = 10000;
 
 char* EMPTY_STRING;
 stringstream ss;			// Store Numbers
 
+/*** OPTIONS ***/
 bool usingAI = true;
+bool usingCurses = true;
+bool storingGame = false;
+bool loadingFile = false;
+bool viewingFile = false;
+string storedGameName;
+string viewedFileName = "storedGames/default.gam";
+string loadedFileName = "storedGames/default.gam";
 
 AI myAI;
 basicAI_1 basicAI;
 rowfillAI rowfillAI;
 
+void drawBoardNoCurses(board_2048& b){
 
+	for (int i = 0; i < 16; i++) {
+		cout.width(7);
+		cout << b.getVal(i);
+		cout.width(1);
+		cout << " | ";
+		if (i % 4 == 3)
+		cout << '\n';
+	}
+
+}
 
 void drawSquare(int pos, board_2048& b) {
 	init_pair(1, COLOR_WHITE, COLOR_BLACK);
@@ -72,6 +97,7 @@ void drawSquare(int pos, board_2048& b) {
 	}
 	else{
 		int colorPairValue = (int) (log(b.getVal(pos)) / log(2));
+		if (colorPairValue < 0 || colorPairValue > 16) colorPairValue = 0;
 		if (b.getVal(pos) > 0 ) {
 			attron(COLOR_PAIR( (colorPairValue % 16) + 1) );
 		}
@@ -88,12 +114,12 @@ void drawSquare(int pos, board_2048& b) {
 		addstr( EMPTY_STRING );
 		move(y, x + 1);
 		for (int i = 0; i < diff - 1; i++)
-			addch(' ');
+		addch(' ');
 
 		addstr( (ss.str()).c_str() );
 
 		for (int i = 0; i < diff - 1; i++)
-			addch(' ');
+		addch(' ');
 		if (b.getVal(pos) > 0 ) {
 			attroff(COLOR_PAIR( (colorPairValue % 16) + 1) );
 		}
@@ -101,68 +127,80 @@ void drawSquare(int pos, board_2048& b) {
 }
 
 void drawBoard(board_2048& b) {
-	// Draw Border
-	// Horizontal Lines
-	move(score_y, score_x);
-	ss.str("");
-	ss << b.getScore() << "     ";
-	init_pair(1, COLOR_RED, COLOR_BLACK);
-	attron(COLOR_PAIR(1));
-	addstr( "SCORE: " );
-	addstr( (ss.str()).c_str());
-	// Add High Score
-	ss.str("");
-	ss << highScore << "         ";
-	move(score_y + 1, score_x);
-	addstr( "HIGHSCORE: " );
-	addstr( ss.str().c_str());
+	if (usingCurses){
+		// Draw Border
+		// Horizontal Lines
+		move(score_y, score_x);
+		ss.str("");
+		ss << b.getScore() << "     ";
+		init_pair(1, COLOR_RED, COLOR_BLACK);
+		attron(COLOR_PAIR(1));
+		addstr( "SCORE: " );
+		addstr( (ss.str()).c_str());
+		// Add High Score
+		ss.str("");
+		ss << highScore << "         ";
+		move(score_y + 1, score_x);
+		addstr( "HIGHSCORE: " );
+		addstr( ss.str().c_str());
 
-	// Add GAme Number
-	ss.str("");
-	ss << "GAME NUMBER: " << gameNumber;
-	move(score_y + 2, score_x);
-	addstr(ss.str().c_str());
+		// Add GAme Number
+		ss.str("");
+		ss << "GAME NUMBER: " << gameNumber;
+		move(score_y + 2, score_x);
+		addstr(ss.str().c_str());
 
-	attroff(COLOR_PAIR(1));
-	for (int j = 0; j < 5; j++) {
-		move(y_0 - 1 + squareHeight*j, x_0);
-		for (int i = 0; i < 4 * squareWidth; i++ )
+		attroff(COLOR_PAIR(1));
+		for (int j = 0; j < 5; j++) {
+			move(y_0 - 1 + squareHeight*j, x_0);
+			for (int i = 0; i < 4 * squareWidth; i++ )
 			if ( i % squareWidth == 0) {
 				if (j == 0) addch(ACS_TTEE);
 				else if (j == 4) addch(ACS_BTEE);
 				else addch(ACS_HLINE);
 			}
 			else
-				addch(ACS_HLINE);
-	}
-	// Vertical Lines
-	for (int j = 0; j < 4*squareHeight; j++) {
-		for (int i = 0; i < 5; i++){
-			move(y_0 + j, x_0 + i * squareWidth);
-			if (j % squareHeight == squareHeight - 1) {
-				if (i == 0) addch(ACS_LTEE);
-				else if (i == 4) addch(ACS_RTEE);
-				else addch(ACS_PLUS);
-			}
-			else
+			addch(ACS_HLINE);
+		}
+		// Vertical Lines
+		for (int j = 0; j < 4*squareHeight; j++) {
+			for (int i = 0; i < 5; i++){
+				move(y_0 + j, x_0 + i * squareWidth);
+				if (j % squareHeight == squareHeight - 1) {
+					if (i == 0) addch(ACS_LTEE);
+					else if (i == 4) addch(ACS_RTEE);
+					else addch(ACS_PLUS);
+				}
+				else
 				addch(ACS_VLINE);
 
+			}
 		}
-	}
-	// Draw Corners
-	move(y_0 - 1, x_0);
-	addch(ACS_ULCORNER);
-	move(y_0 - 1, x_0 + 4*squareWidth);
-	addch(ACS_URCORNER);
-	move(y_0 + 4*squareHeight - 1, x_0);
-	addch(ACS_LLCORNER);
-	move(y_0 + 4*squareHeight - 1, x_0 + 4 * squareWidth);
-	addch(ACS_LRCORNER);
+		// Draw Corners
+		move(y_0 - 1, x_0);
+		addch(ACS_ULCORNER);
+		move(y_0 - 1, x_0 + 4*squareWidth);
+		addch(ACS_URCORNER);
+		move(y_0 + 4*squareHeight - 1, x_0);
+		addch(ACS_LLCORNER);
+		move(y_0 + 4*squareHeight - 1, x_0 + 4 * squareWidth);
+		addch(ACS_LRCORNER);
 
-	for (int i = 0; i < 16; i++) {
-		drawSquare(i, b);
-	}
-	move(HEIGHT, WIDTH);
+		for (int i = 0; i < 16; i++) {
+			drawSquare(i, b);
+		}
+		move(HEIGHT, WIDTH);
+	} // if using curses
+	else { // no curses
+		for (int i = 0; i < 16; i++) {
+			cout.width(7);
+			cout << b.getVal(i);
+			cout.width(1);
+			cout << " | ";
+			if (i % 4 == 3)
+			cout << '\n';
+		}
+	} // no curses
 }
 
 void nCursesInit() {
@@ -174,7 +212,7 @@ void nCursesInit() {
 
 	EMPTY_STRING = new char[squareWidth];
 	for (int i = 0; i < squareWidth - 1; i++)
-		EMPTY_STRING[i] = ' ';
+	EMPTY_STRING[i] = ' ';
 }
 
 void initColorPairs() {
@@ -197,64 +235,173 @@ void initColorPairs() {
 	//init_pair(16, COLOR_GREEN, COLOR_BLUE);
 }
 
+void help(){
+	cout << "2048 Help \n";
+	cout << "\t-h,            --help:           This help menu\n";
+	cout << "\t-s [FILENAME], --s [FILENAME]:   Store game to FILENAME on exit\n";
+	cout << "\t\tdefault FILENAME: 'storedGames/default.gam'\n";
+	cout << "\t-nc,          --nocurses:        Disable ncurses interface - buggy\n";
+	cout << "\t-v,           --viewgame:        Load a game for viewing - no play\n";
+	cout << "\t-l,           --loadgame:        Load a game for playing. Not implemented\n";
+	cout << "\t-n,           --numberofgames:   Number of games for AI to play\n";
+	cout << "\t-t,           --sleeptime:       Time between AI moves.\n";
+	exit(0);
+}
+
 int main(int argc, const char* argv[]) {
 	board_2048 board = board_2048();
-	board_2048 board2 = board_2048(board);
+	/* Argument Parsing */
+	for (int i = 1; i < argc; i++) {
+		/* Human Play */
+		if ((strcmp(argv[i], "-p") == 0) || (strcmp(argv[i], "--human") == 0))
+			usingAI = false;
+		/* Store game in file argv[i+1] or default.gam */
+		if ((strcmp(argv[i], "-s") == 0) || (strcmp(argv[i], "--store") == 0)){
+			if (i < argc - 1)
+				storedGameName = string("storedGames/") + string(argv[++i]);
+			else storedGameName = "storedGames/default.gam";
+			storingGame = true;
+			board.turnStorageOn();
+		}
+		/* Disable ncurses */
+		if ((strcmp(argv[i], "-nc") == 0) || (strcmp(argv[i], "--nocurses") == 0))
+			usingCurses = false;
+		/* Load game for viewing (no play) */
+		if ((strcmp(argv[i], "-v" ) == 0) || (strcmp(argv[i], "--viewgame") == 0)) {
+			if (i < argc - 1) viewedFileName = argv[++i];
+			else viewedFileName = string("storedGames/") + string("default.gam");
+			viewingFile = true;
+		}
+		/* Load game */
+		if ((strcmp(argv[i], "-l" ) == 0) || (strcmp(argv[i], "--load") == 0 )) {
+			if (i < argc - 1) loadedFileName = argv[++i];
+			else loadedFileName = "storedGames/default.gam";
+			loadingFile = true;
+		}
+		if ((strcmp(argv[i], "-n" ) == 0) || (strcmp(argv[i], "--numberofgames") == 0 ))
+			if (i < argc - 1) numberOfGames = atoi(argv[++i]);
+
+		if ((strcmp(argv[i], "-t" ) == 0) || (strcmp(argv[i], "--sleeptime") == 0 ))
+			if (i < argc - 1 && atoi(argv[++i]) >= 0) sleeptime = atoi(argv[i]);
+		if ((strcmp(argv[i], "-h" ) == 0) || (strcmp(argv[i], "--help") == 0))
+			help();
+	}
+
 	stringstream ss;
-	board.init();
-	nCursesInit();
-	// TEMP
-	attron(COLOR_PAIR(3));
+	if (usingCurses){
+		board.init();
+		nCursesInit();
+		// TEMP
+		attron(COLOR_PAIR(3));
+	}
 	bool repeat = true;
 	char ch;
 
-	if (argc > 1 && ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--human") == 0)))
-		usingAI = false;
+	/* Loading Game */
+	if (loadingFile) {
+		char ch;							// Hold user moves
+		bool repeat = true;			// Control display loop
+		bool loadError = false;		// See if file failed to load
+		int currentScore = 0;		// Maybe unneeded?
+		board.loadFile(viewedFileName);
+		if (board.storedGameIsEmpty()) {
+			loadError = true;
+			cout << "Error Loading File\n";
 
-	// AI loop
-	if (usingAI) {
+		}
+		if (! loadError){
+			board.toFile("boardDump.gam");
+			board.loadCurrentState();
+			drawBoard(board);
+			while (repeat){
+				drawBoard(board);
+				ch = getch();
+				switch (ch) {
+					case 'q':
+					case 'Q':
+						repeat = false;
+						break;
+					case 'a':
+						board.decrementState();
+						break;
+					case 'd':
+						board.incrementState();
+						break;
+					case 's':
+						board.decrementState(5);
+						break;
+					case 'w':
+						board.incrementState(5);
+						break;
+					case 'e':
+						while (board.incrementState()){}
+						break;
+					case 'b':
+						while (board.decrementState()){}
+					//case 'c':					// Write comment
+
+				}
+				board.loadCurrentState();
+				refresh();
+			}
+		}
+	}
+
+	/* AI Loop */
+	else if (usingAI) {
 		int currentScore;
 		for (gameNumber = 1;gameNumber <= numberOfGames; gameNumber++) {
 			currentScore = board.newGame();
 			if (currentScore > highScore) highScore = currentScore;
 			direction_t d;
 			while (true) {
-				drawBoard(board);
 				d = rowfillAI.chooseMove(board);
+				if (usingCurses){
+					drawBoard(board);
+					//
+					// move(0,0);
+					// switch (d) {
+					// 	case UP:
+					// 	addstr("UP    ");
+					// 	break;
+					// 	case DOWN:
+					// 	addstr("DOWN  ");
+					// 	break;
+					// 	case LEFT:
+					// 	addstr("LEFT  ");
+					// 	break;
+					// 	case RIGHT:
+					// 	addstr("RIGHT ");
+					// 	break;
+					// 	default:
+					// 	addstr("NONE  ");
+					// 	break;
+					// }
+					refresh();
+					usleep(sleeptime);
 
-				move(0,0);
-				switch (d) {
-					case UP:
-						addstr("UP    ");
-						break;
-					case DOWN:
-						addstr("DOWN  ");
-						break;
-					case LEFT:
-						addstr("LEFT  ");
-						break;
-					case RIGHT:
-						addstr("RIGHT ");
-						break;
-					default:
-						addstr("NONE  ");
-						break;
+					board.move(d);
+					if (d == NONE) break;
+				} // if using ncurses
+				else {
+					char ch = 'd';
+
+					drawBoard(board);
+					board.move(d);
 				}
-				refresh();
-				usleep(SLEEP_TIME);
-
-				board.move(d);
-				if (d == NONE) break;
-			}
+			} // while (True)
 			drawBoard(board);
-			refresh();
+			if (usingCurses)
+				refresh();
 
-		}
+		} // for game number loop
 		if (board.getScore() > highScore) highScore = board.getScore();
 		cout << highScore;
 		cin >> ch;
-	}
-	// Human Loop
+	} // Using AI
+
+
+	/* Human Loop */
 	else while (repeat) {
 		drawBoard(board);
 		ch = getch();
@@ -263,42 +410,43 @@ int main(int argc, const char* argv[]) {
 			case 'Q':
 			case 'x':
 			case 'X':
-				repeat = false;
-				break;
+			repeat = false;
+			break;
 			case 'w':
 			case 'W':
 			case KEY_UP:
-				board.move(UP);
-				move(21, 0);
-				addch('U');
-				break;
+			board.move(UP);
+			move(21, 0);
+			addch('U');
+			break;
 			case 'S':
 			case 's':
 			case KEY_DOWN:
-				board.move(DOWN);
-				move(21, 0);
-				addch('D');
-				break;
+			board.move(DOWN);
+			move(21, 0);
+			addch('D');
+			break;
 			case 'a':
 			case 'A':
 			case KEY_LEFT:
-				board.move(LEFT);
-				move(21, 0);
-				addch('L');
-				break;
+			board.move(LEFT);
+			move(21, 0);
+			addch('L');
+			break;
 			case 'd':
 			case 'D':
 			case KEY_RIGHT:
-				board.move(RIGHT);
-				move(21, 0);
-				addch('R');
-				break;
+			board.move(RIGHT);
+			move(21, 0);
+			addch('R');
+			break;
 			default:
-				repeat = true;
+			repeat = true;
 		}
 		refresh();
 	}
+	if (storingGame) board.toFile(storedGameName);
 	drawBoard(board);
 	endwin();
-	delete[] EMPTY_STRING;
+	//delete[] EMPTY_STRING;
 }

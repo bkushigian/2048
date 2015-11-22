@@ -1,121 +1,149 @@
 #include "gameStorage.hpp"
 
 /* gamestate methods */
-gamestate::gamestate(array_t b, unsigned int s, direction_t m, gamestate* p, gamestate* n){
-      for (int pos = 0; pos < 15; ++pos) board[pos] = b.values[pos];
-      score = s;
-      move = m;
-      prev = p;
-      next = n;
-}
-array_t gamestate::getBoard(){
-   array_t result(16);
-   for (int pos = 0; pos < 16; ++pos){
-      result.values[pos] = board[pos];
-   }
-   return result;
-}
-void gamestate::setBoard(array_t b){
-   for (int pos = 0; pos < 16; ++pos){
-      board[pos] = b.values[pos];
-   }
-}
-unsigned int gamestate::getScore(){
-   return score;
-}
-void gamestate::setScore(unsigned int s){
-   score = s;
-}
-gamestate* gamestate::getNext(){
-   return next;
-}
-void gamestate::setNext(gamestate* n){
-   next = n;
-}
-gamestate* gamestate::getPrev(){
-   return prev;
-}
-void gamestate::setPrev(gamestate* p){
-   prev = p;
-}
 
 
-/* storedGame methods */
+/* storedGame Constructors/Destrustors */
+storedGame::storedGame() {
+   current = 0;
+}
 storedGame::storedGame(std::string fName){
-   head = NULL;
-   tail = NULL;
-   curr = NULL;
    parseFile(fName);
+   current = 0;
+}
+storedGame::storedGame(storedGame& other) {
+   gamevector = other.gamevector;
+   current = 0;
 }
 
-void storedGame::parseFile(std::string fName){
+/* Getters/Setters/Board Updates */
+gamestate storedGame::getState(int n) {
+   if (0 <= n && n < gamevector.size()) return gamevector.at(n);
+   gamestate g;
+   return g;
+}
+gamestate storedGame::getCurrentState() {
+   return gamevector.at(current);
+}
+board_t storedGame::getBoard(int n) {
+   if (0 <= n && n < gamevector.size()) return gamevector.at(n).getBoard();
+   return board_t();
+}
+board_t storedGame::getCurrentBoard(){
+   return gamevector.at(current).getBoard();
+}
+unsigned int storedGame::getScore(int n) {
+   if (0 <= n && n < gamevector.size()) return gamevector.at(n).getScore();
+   return -1;
+}
+unsigned int storedGame::getCurrentScore(){
+   return gamevector.at(current).getScore();
+}
+bool storedGame::increment(){
+   if ( current < gamevector.size() -1 ) {
+      ++current;
+      return true;
+   }
+   return false;
+}
+bool storedGame::decrement(){
+   if ( current > 0 ) {
+      --current;
+      return true;
+   }
+   return false;
+}
+void storedGame::append(gamestate g) {
+   gamevector.push_back(g);
+}
+
+
+board_t storedGame::parseBoardString(std::string b){
+   unsigned int         bar[16];
+   std::stringstream    boardStream(b);
+   std::string          cell;
+   int pos = 0;
+   while (std::getline(boardStream, cell, ',')){
+      bar[pos++] = std::atoi(cell.c_str());
+   }
+   return board_t(bar);
+}
+/*** File IO ***/
+bool storedGame::parseFile(std::string fName){
+   static boost::smatch what;        // Store search results
+   static boost::regex expr("^([0-9])+::\\[([0-9]+(,[0-9]+){15})\\]::([0-9]+)::(UP|DOWN|LEFT|RIGHT)");
    std::ifstream f(fName.c_str());
    std::string line;
    if (f.is_open()){
       while(getline(f,line)){
          if (line.length() > 0) {
-            if (line.at(0) != '#')
-               append(parseState(line));
+            if (boost::regex_search(line, what, expr))
+               append(parseState(line, what));
          }
       }
+      return true;
    }
+   return false;
 }
 
-gamestate* storedGame::parseState(std::string line) {
+gamestate storedGame::parseState(std::string line, boost::smatch what) {
    /* Unimplemented, testing compile for regex*/
-   int n;      // move number
-   array_t b(16);
-   unsigned int s = 1234;
-   direction_t m = UP;
-   std::string re_validLine = "^[0-9]+::\\[[0-9]+(,[0-9]+){15}\\]::[0-9]+::(UP|DOWN|LEFT|RIGHT)";
-   gamestate* result = new gamestate(b,s,m,NULL,NULL);
-   return result;
+   /* what[0]: Holds line
+    * what[1]: Move Num
+    * what[2]: Board
+    * what[3]: Residue from regex -- discard
+    * what[4]: Score
+    * what[5]: Direction */
+   int moveNum = std::atoi(std::string(what[1]).c_str());      // move number
+   board_t b = parseBoardString(std::string(what[2]).c_str());
+   unsigned int s = std::atoi(std::string(what[4]).c_str());
+   direction_t moveDir;
+
+   if          (strcmp(std::string(what[5]).c_str(), "UP") == 0)     moveDir = UP;
+   else if     (strcmp(std::string(what[5]).c_str(), "DOWN") == 0)   moveDir = DOWN;
+   else if     (strcmp(std::string(what[5]).c_str(), "LEFT") == 0)   moveDir = LEFT;
+   else if     (strcmp(std::string(what[5]).c_str(), "RIGHT") == 0)  moveDir = RIGHT;
+   else                                                 moveDir = NONE;
+
+   return gamestate(b,s,moveDir);
 }
-storedGame::~storedGame(){
-   if (head != NULL){
-      gamestate* n = head->getNext();
-      curr = head;
-      while (n != NULL){
-         delete curr;
-         curr = n;
-         n = n->getNext();
+
+std::string storedGame::toString(){
+   std::stringstream ss;
+   gamestate g;
+   int moveNum = 1;
+   for (int i = 0; i < gamevector.size(); i++) {
+      g = gamevector.at(i);
+      ss << moveNum << "::" << '[';
+      for (int pos = 0; pos < 15; ++pos)
+         ss << g.getBoard().values[pos] << ',';
+      ss << g.getBoard().values[15] << "]::" << g.getScore();
+      direction_t dir = g.getMove();
+      switch (g.getMove()) {
+         case UP:
+            ss << "::UP\n";
+            break;
+         case DOWN:
+            ss << "::DOWN\n";
+            break;
+         case RIGHT:
+            ss << "::RIGHT\n";
+            break;
+         case LEFT:
+            ss << "::LEFT\n";
+            break;
+         default:
+            ss << "::NONE\n";
+            break;
       }
-      delete curr;
+
+      ++moveNum;
    }
+   return ss.str();
 }
 
-bool storedGame::prev(){
-   if (curr == NULL) return false;
-   if (curr->getPrev() == NULL) return false;
-   curr = curr->getPrev();
-   return true;
-}
-
-bool storedGame::next(){
-   if (curr == NULL) return false;
-   if (curr->getNext() == NULL);
-   curr = curr->getNext();
-   return true;
-}
-
-array_t storedGame::getBoard(){
-   return curr->getBoard();
-}
-unsigned int storedGame::getScore(){
-   return curr->getScore();
-}
-
-void storedGame::append(gamestate* g) {
-   if (head == NULL){
-      head = g;
-      tail = head;
-      curr = head;
-      head->setPrev(NULL);
-      head->setNext(NULL);
-   }
-   else {
-      g->setPrev(tail);
-      tail->setNext(g);
-      tail = g;
-   }
+void storedGame::toFile(std::string fname){
+   std::ofstream f(fname.c_str());
+   if (f.is_open()) f << this->toString().c_str();
+   f.close();
 }

@@ -7,6 +7,7 @@ board_2048::board_2048(){
 	for (int i = 0; i < boardsize; i++)
 		board[i] = 0;
 	score = 0;
+	storingGame = false;
 }
 
 board_2048::board_2048(unsigned int* entries) {
@@ -14,6 +15,8 @@ board_2048::board_2048(unsigned int* entries) {
 	for (int i = 0; i < boardsize; i++)
 		board[i] = entries[i];
 	score = 0;
+	storingGame = false;
+
 }
 
 board_2048::board_2048(const board_2048& b) {
@@ -21,10 +24,10 @@ board_2048::board_2048(const board_2048& b) {
 	for (int i = 0; i < boardsize; i++)
 		board[i] = b.getValAtPos(i);
 	score = b.getScore();
+	storingGame = false;
 }
 
 board_2048::~board_2048(){
-
 }
 
 /*** Misc ***/
@@ -36,7 +39,13 @@ int board_2048::newGame(){
 	score = 0;
 	return highscore;
 }
+void board_2048::setBoard(gamestate g) {
+	for (int i = 0; i < 16; i++) {
+		board[i] = g.getBoardValue(i);
+	}
 
+	score = g.getScore();
+}
 void board_2048::getBoard(unsigned int* b){
 	for (int i = 0; i < 16; i++) b[i] = board[i];
 }
@@ -127,7 +136,6 @@ bool board_2048::isValidMove(direction_t dir) const {
 		return false;
 }
 
-
 bool board_2048::hasMove() const {	// NEED TO FINISH!!!!!!!!!!!!!!1
 	if (! this->boardIsFull()) return true;
 	// Board is full -- check if there is a valid move
@@ -141,23 +149,14 @@ int board_2048::getValAtPos(int pos) const {
 	return -1;
 }
 
-array_t& board_2048::getPosOfVal(int val) const {
-	int n = 0;		// Holds number of positions with value val
-	int posOfVal[16];
-	for (int pos = 0; pos < boardsize; pos++){
-		if (board[pos] == val) {
-			posOfVal[n] = pos;
-			n++;
-		}
-	}
-	array_t* result = new array_t(n);
-	for (int i = 0; i < n; i++) {
-		result->values[i] = posOfVal[i];
-	}
-	return* result;
+std::vector<int> board_2048::getPosOfVal(int val) const {
+	std::vector<int> result;
+	for (int pos = 0; pos < boardsize; ++pos)
+		if (board[pos] == val) result.push_back(pos);
+	return result;
 }
 
-array_t& board_2048::getPosOfEmpty() const {
+std::vector<int> board_2048::getPosOfEmpty() const {
 	return getPosOfVal(0);
 }
 
@@ -255,7 +254,7 @@ direction_t board_2048::rowOrder(int row) const {
 				isOrderedRight = false;
 		}
 
-		// Check High To Low next
+		// Check High To Low nehttp://www.cplusplus.com/reference/sstream/stringstream/str/xt
 		if ( getVal(base + i) != 0 ) {
 			if (getVal(base + i) <= lowest || lowest == 0)
 				lowest = getVal(base + i);
@@ -306,13 +305,11 @@ direction_t board_2048::columnOrder(int col) const {
 
 void board_2048::spawnNumber() {
 	//default to 2
-	array_t empties = getPosOfEmpty();
-	if (empties.size == 0) {std::cout << "Error - no empties\n"; return;}
-	int index = empties.values[randInRange(0,empties.size)];
-	if (randInRange(0,10) == 0)
-		board[index] = 2;
-	else
-		board[index]= 2;
+	std::vector<int> empties = getPosOfEmpty();
+
+	int index = empties.at(randInRange(0,empties.size()));
+	if (randInRange(0, 10) == 0) board[index] = 4;
+	else board[index] = 2;
 }
 
 void board_2048::init() {
@@ -324,14 +321,14 @@ void board_2048::init() {
 
 
 void board_2048::move(direction_t dir) {
+	toGameState();
+	if (storingGame && isValidMove(dir))
+		storedgame.append(this -> toGameState(dir) );
 	int pos;
 	bool madeAMove= false;
 	bool alreadyMerged[16] = {false, false, false, false, false, false, false, false,
 							 false, false, false, false, false, false, false, false };
 	if (dir == UP || dir == LEFT) {		// dir < 0
-		#ifdef BOARD_DBG
-		std::cout << "\tDBG: move(): dir == UP or dir == LEFT" << std::endl;
-		#endif
 		for (int i = 0; i < 16; i++) { 				// Check each square
 			while (getVal(i) == 0 && i < 15) i++;	// Find first nonzero entry
 			pos = i;		// Store position as we move current square
@@ -382,4 +379,52 @@ void board_2048::move(direction_t dir) {
 		}
 	}
 	if(madeAMove) spawnNumber();
+}
+
+gamestate board_2048::toGameState() {
+	board_t b;
+	for (int pos = 0; pos < 16; ++pos){
+		b.values[pos] = board[pos];
+	}
+	gamestate result(b, score);
+	return result;
+}
+gamestate board_2048::toGameState(direction_t d){
+	board_t b;
+	for (int pos = 0; pos < 16; ++pos){
+		b.values[pos] = board[pos];
+	}
+	gamestate result(b, score, d);
+	return result;
+}
+
+void board_2048::toFile(std::string fname) {
+	storedgame.toFile(fname);
+}
+bool board_2048::loadFile(std::string fname) {
+	storedgame.parseFile(fname);
+}
+
+bool board_2048::loadCurrentState() {
+	setBoard(storedgame.getCurrentState());
+
+	return true;
+}
+bool board_2048::incrementState(){
+	return storedgame.increment();
+}
+bool board_2048::incrementState(int n){
+	for (int i = 0; i < n; ++i) storedgame.increment();
+	return true;
+}
+bool board_2048::decrementState(){
+	return storedgame.decrement();
+}
+bool board_2048::decrementState(int n){
+	for (int i = 0; i < n; ++i ) storedgame.decrement();
+	return true;
+}
+
+bool board_2048::storedGameIsEmpty() {
+	return storedgame.isEmpty();
 }

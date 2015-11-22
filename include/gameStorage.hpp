@@ -5,67 +5,54 @@
 #define _GAMESTORAGE_HPP
 #include <fstream>
 #include <string>
+#include <iostream>
 #include <boost/regex.hpp>            // For file parsing
-#include "array_t.hpp"
-#include "board_2048.hpp"
+#include <sstream>
+#include <vector>
+#include "board_t.hpp"
+#include "direction_t.hpp"
+#include "gamestate.hpp"
 
-
-/* gameState is a node in the storedGame linkedList */
-class gamestate {
-public:
-   gamestate(){next = NULL; prev = NULL;}
-   gamestate(array_t b, unsigned int s, direction_t m, gamestate* p, gamestate* n);
-   array_t getBoard();
-   void setBoard(array_t b);
-   unsigned int getScore();
-   void setScore(unsigned int s);
-   gamestate* getNext();
-   void setNext(gamestate* n);
-   gamestate* getPrev();
-   void setPrev(gamestate* p);
-   direction_t getMove();
-   void setMove(direction_t m) {move = m;}
-private:
-   gamestate* next;
-   gamestate* prev;
-   unsigned int board[16];    // The board of gamestate
-   unsigned int score;        // The score of gamestate
-   std::string name;
-   direction_t move;          // Next move
-
-
-};
+static board_t errorBoard((unsigned int []) { -1, -1, -1, -1,
+                                       -1, -1, -1, -1,
+                                       -1, -1, -1, -1,
+                                       -1, -1, -1, -1});
 
 /* A glorified linked list */
 class storedGame {
 
 public:
+   storedGame();
    storedGame(std::string fName);
-   ~storedGame();
+   storedGame(storedGame& other);
+
+   /* getters/setters */
+   gamestate getState(int n);
+   gamestate getCurrentState();
+   board_t getBoard(int n);
+   board_t getCurrentBoard();
+   unsigned int getScore(int n);
+   unsigned int getCurrentScore();
+   bool increment();
+   bool decrement();
+   void append(gamestate g);
+   void setComment(std::string c) { comment = c;}
+   std::string getComment() { return comment;}
+   board_t parseBoardString(std::string b);
+   bool isEmpty(){
+      return (gamevector.size() == 0);
+   }
+
    // file io
-   void parseFile(std::string fName);
-   gamestate* parseState(std::string line);
-   void writeToFile(std::string fName);
-   // getters and setters
-   gamestate* getHead(){return head;}
-   gamestate* getTail(){return tail;}
-   gamestate* getCurr(){return curr;}
-   void setHead(gamestate* h) { head = h;}
-   void setTail(gamestate* t) { tail = t;}
-   void setCurr(gamestate* c) { curr = c;}
+   bool parseFile(std::string fName);
+   gamestate parseState(std::string line, boost::smatch what);
+   std::string toString();
+   void toFile(std::string fname);
 
-   bool next();
-   bool prev();
-
-   array_t getBoard();
-   unsigned int getScore();
-
-
-   void append(gamestate* g);
 private:
-   gamestate* head;  // Head of the list (state 0)
-   gamestate* tail;  // Tail of the list (state n-1 for an n-state game)
-   gamestate* curr;  // Current state being inspected
+   std::vector<gamestate> gamevector;
+   int current;
+   std::string comment;
 };
 
 #endif

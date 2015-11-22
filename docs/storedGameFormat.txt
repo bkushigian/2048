@@ -1,0 +1,7 @@
+Stored Game Format:
+
+Format:                                 Rendered As:
+"#.*"                                   Comment
+"\d+::[\d+(,\d)+]::\d+::(DIR)           Game state
+"\d+::[\d+(,\d)+]::\d+::(DIR)#.*        Game state + Comment
+
