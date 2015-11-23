@@ -13,8 +13,7 @@ As you can see, this is very lo-fi. I will be working on the aesthetics at some 
 
 ### Moving
 The movement keys are just the WASD: W for up, S for down, A for left and D for right.
-![Movement Keys][WASD]
-[WASD]: http://benkushigian.com/misc/img/gh/2048/WASD.png
+![WASD](http://benkushigian.com/misc/img/gh/2048/WASD.png "Movement Keys")
 
 
 ## Some options
