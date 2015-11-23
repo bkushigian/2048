@@ -32,5 +32,4 @@ Right now the AI is very simple. It is pretty much: "Can I move up? If so, move 
 ## Moving forward -- what's next?
 I'm implementing some methods for analyzing the board - simple statements about qualities of the board. Is it full? Is a row or column full? Where's the highest value? Is it in a corner? Part of this will be formulating the right questions to ask the board. From that I will redesing the current AI class so that it loads a file of perameters and from there evaluating each board position.
 
-
-
+I also need to clean up the code and standardize some of my conventions, both naming and programmatic. This has been a piecemeal process over the last 6 months (comprised mainly of big gaps between writing code) so the code is a bit messy. 
