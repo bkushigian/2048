@@ -29,3 +29,6 @@ The movement keys are just the WASD: W for up, S for down, A for left and D for 
 
 ## Moving forward -- what's next?
 I'm implementing some methods for analyzing the board - simple statements about qualities of the board. Is it full? Is a row or column full? Where's the highest value? Is it in a corner? Part of this will be formulating the right questions to ask the board. From that I will redesing the current AI class so that it loads a file of perameters and from there evaluating each board position.
+
+
+
