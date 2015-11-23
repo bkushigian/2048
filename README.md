@@ -26,6 +26,9 @@ The movement keys are just the WASD: W for up, S for down, A for left and D for 
 | `-n [NUMBER]`      | `--numberofgames [NUMBER]` | Number of games before exit - useful for AI mode |
 | `-t [TIME]`        | `--sleeptime [TIME]`| Sleep time between AI moves. |
 
+## The AI
+Right now the AI is very simple. It is pretty much: "Can I move up? If so, move up. Else, can I move right? If so move right. Else...". As you can imagine, this is not very strong. I have run batches of 100s of games with scores that I could beat in my sleep. In the future I hope to outdo my own high scores regularly with my AI.
+
 ## Moving forward -- what's next?
 I'm implementing some methods for analyzing the board - simple statements about qualities of the board. Is it full? Is a row or column full? Where's the highest value? Is it in a corner? Part of this will be formulating the right questions to ask the board. From that I will redesing the current AI class so that it loads a file of perameters and from there evaluating each board position.
 
