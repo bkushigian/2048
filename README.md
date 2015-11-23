@@ -6,7 +6,7 @@ Built in C++ using ncurses and boost/regex, this is a work in progress. It runs 
 
 2048 is ultimately meant to be a tool to help me build an AI. As such the default is for the AI to take over. However it is just a 'nominal' AI - it's really pretty terrible. To play as a human run `2048 -p` or `2048 --human`. This will bring you to this screen:
 
-<img style="float:left" src="http://benkushigian.com/misc/img/gh/2048/2048_2.png">
+![screenshot1](http://benkushigian.com/misc/img/gh/2048/2048_2.png "Opening Screen")
 
 
 As you can see, this is very lo-fi. I will be working on the aesthetics at some point but that's not really my focus.
