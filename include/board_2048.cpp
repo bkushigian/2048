@@ -144,9 +144,84 @@ bool board_2048::hasMove() const {	// NEED TO FINISH!!!!!!!!!!!!!!1
 	return false;
 }
 
+bool board_2048::inCorner(int val) const{
+	return (getValAtPos(0) == val || getValAtPos(3) == val ||
+		getValAtPos(12) == val || getValAtPos(15) == val);
+}
+
 int board_2048::getValAtPos(int pos) const {
 	if (isValidPos(pos)) return board[pos];
 	return -1;
+}
+
+bool board_2048::isGridlocked(){
+	int count = 0;
+	if (isValidMove(UP)) ++count;
+	if (isValidMove(DOWN)) ++count;
+	if (isValidMove(LEFT)) ++count;
+	if (isValidMove(RIGHT)) ++count;
+	return count < 2;
+}
+bool board_2048::isNormal(){
+	if (! inCorner(getHighestVal())) return false;
+	std::vector<int> highVals = getPosOfVal(getHighestVal());
+	bool isSortedVert = true, isSortedHorz = true;
+	for (int i = 0; i < highVals.size(); ++i){
+		if (highVals[i] == 0 || highVals[i] == 3 || highVals[i] == 12 || highVals[i] == 15){
+			int hdm = 1, vdm = 4;	// Multiply to change iteration direction
+			if (highVals[i] == 3 || highVals[i] == 15) hdm = -1;
+			if (highVals[i] == 12 || highVals[i] == 15) vdm = -4;
+			for (int j = 1; j < 4; ++j)
+			{
+				if (board[highVals[i] + j * hdm] > board[highVals[i] + hdm*(j - 1)]
+					|| board[highVals[i] + hdm*j] == 0) isSortedHorz = false;
+				if (board[highVals[i] + vdm * j] > board[highVals[i] + vdm*(j-1)]
+					|| board[highVals[i] + vdm * j] == 0) isSortedVert = false;
+			}
+			if (isSortedVert || isSortedHorz) return true;
+		}
+
+	}
+	return false;
+}
+
+std::vector<unsigned int> board_2048::getSortedVals(){
+	std::vector<unsigned int> vec (board, board + 16);
+	std::sort(vec.begin(), vec.end(), reverseComp);
+	return vec;
+}
+
+int board_2048::normality(){
+	if (! inCorner(getHighestVal())) return 0;
+
+	std::vector<int> highVals = getPosOfVal(getHighestVal());
+	std::vector<unsigned int> sortedVals = getSortedVals();
+
+	bool isSortedVert, isSortedHorz;
+	for (int i = 0; i < highVals.size(); ++i){
+		isSortedVert = true; isSortedHorz = true;
+		if (highVals[i] == 0 || highVals[i] == 3 || highVals[i] == 12 || highVals[i] == 15){
+			int hdm = 1, vdm = 4;	// Multiply to change iteration direction
+			int vertNormality = 0, horzNormality = 0;			// Holds normal state
+			if (highVals[i] == 3 || highVals[i] == 15) hdm = -1;
+			if (highVals[i] == 12 || highVals[i] == 15) vdm = -4;
+			for (int j = 1; j < 4; ++j)
+			{
+				if (board[highVals[i] + j * hdm] > board[highVals[i] + hdm*(j - 1)]
+					|| board[highVals[i] + hdm*j] == 0) isSortedHorz = false;
+				if (board[highVals[i] + j * hdm] == sortedVals[i]) horzNormality++;
+				if (board[highVals[i] + vdm * j] > board[highVals[i] + vdm*(j-1)]
+					|| board[highVals[i] + vdm * j] == 0) isSortedVert = false;
+				if (board[highVals[i] + vdm * j] == sortedVals[i]) vertNormality++;
+			}
+			return std::max(vertNormality,horzNormality);
+		}
+
+	}
+	return 0;
+}
+bool board_2048::highValIsUnique(){
+	return (getPosOfVal(getHighestVal()).size() == 1);
 }
 
 std::vector<int> board_2048::getPosOfVal(int val) const {
@@ -321,6 +396,67 @@ void board_2048::init() {
 
 
 void board_2048::move(direction_t dir) {
+	toGameState();
+	if (storingGame && isValidMove(dir))
+		storedgame.append(this -> toGameState(dir) );
+	int pos;
+	bool madeAMove= false;
+	bool alreadyMerged[16] = {false, false, false, false, false, false, false, false,
+							 false, false, false, false, false, false, false, false };
+	if (dir == UP || dir == LEFT) {		// dir < 0
+		for (int i = 0; i < 16; i++) { 				// Check each square
+			while (getVal(i) == 0 && i < 15) i++;	// Find first nonzero entry
+			pos = i;		// Store position as we move current square
+			// Move position to first non-zero position in dir
+			while (isValidPos(pos + dir) && getVal(pos + dir) == 0
+					&& ! posAtEdge(pos, dir)) {
+				pos += dir;
+			}
+			// Check to see if we can merge two squares
+			if ( isValidPos(pos + dir) && (getVal(pos + dir) == getVal(i)) && getVal(i) != 0
+					&& ! posAtEdge(pos, dir) && ! alreadyMerged[pos + dir]) {
+				score += getVal(i)*2;
+				setVal(pos + dir, getVal(i)*2);	// Double value
+				setVal(i, 0);		// Update value at original position to 0
+				alreadyMerged[pos + dir] = true;
+				madeAMove = true;
+			}
+			else if (pos != i && getValAtPos(i) != 0) {	// No score but we move a piece
+				setVal(pos, getVal(i));
+				setVal(i, 0);
+				madeAMove = true;
+			}
+		}
+	}
+	else if (dir == DOWN || dir == RIGHT) {
+		for (int i = 15; i >= 0; i--) {
+			// Find next non-zero value
+			while (getVal(i) == 0 && i > 0) i--;
+			pos = i;		// Store position as we move current squre
+			// Move position to first non-zero position
+			while (isValidPos(pos + dir) && getVal(pos + dir) == 0 && ! posAtEdge(pos, dir)) {
+				pos += dir;
+			}
+			// Check to see if we can merge two squares
+			if ( isValidPos(pos + dir) && getVal(pos + dir) == getVal(i)
+					&& ! posAtEdge(pos, dir) && ! alreadyMerged[pos + dir]) {
+				score += getVal(i) * 2;
+				setVal(pos + dir, getVal(i)*2);	// Double Value
+				setVal(i, 0);
+				alreadyMerged[pos + dir] = true;
+				madeAMove = true;
+			}
+			else if (pos != i && getValAtPos(i) != 0) {
+				setVal(pos, getVal(i));
+				setVal(i, 0);
+				madeAMove = true;
+			}
+		}
+	}
+	if(madeAMove) spawnNumber();
+}
+
+void board_2048::moveNoSpawn(direction_t dir) {
 	toGameState();
 	if (storingGame && isValidMove(dir))
 		storedgame.append(this -> toGameState(dir) );

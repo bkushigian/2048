@@ -3,6 +3,8 @@
 
 #include "AI.hpp"
 #include "../include/board_2048.hpp"
+#include "../include/predictions.hpp"
+#include "../include/globals.hpp"
 
 class rowfillAI : AI {
 private:

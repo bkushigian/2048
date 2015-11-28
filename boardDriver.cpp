@@ -1,3 +1,13 @@
+/*** boardDriver.cpp
+ * This is really a temp file for testing out ideas -- a proof of concept,
+ * if you will. This will evenutally be cleaned up and refactored heavily.
+ *
+ * To Do:
+ * 1) Split off display Class
+ * 2) Implement a better arg parsing
+ * 3) Have better interfacing with saving/loading (all in one)
+ * 4) Make a menu
+ ***/
 #include <iostream>
 #include <string.h>
 #include <ncurses.h>
@@ -11,6 +21,7 @@
 #include "include/gameStorage.hpp"
 #include "include/direction_t.hpp"
 #include "include/gamestate.hpp"
+#include "include/globals.hpp"
 
 #include "AIs/AI.hpp"
 #include "AIs/basicAI_1.hpp"
@@ -26,13 +37,14 @@ int WIDTH = 4 * squareWidth + 2 * x_0;
 int HEIGHT = 4 * squareHeight + 2 * y_0;
 int score_y = 2, score_x = WIDTH/2;
 
+int wins = 0;
 int highScore = 0;
 int numberOfGames = 1;
 
 int gameNumber = 0;
 
-unsigned int sleeptime = 10000;
-
+unsigned int sleeptime = 0;
+unsigned int average = 0;
 char* EMPTY_STRING;
 stringstream ss;			// Store Numbers
 
@@ -132,21 +144,24 @@ void drawBoard(board_2048& b) {
 		// Horizontal Lines
 		move(score_y, score_x);
 		ss.str("");
-		ss << b.getScore() << "     ";
+		ss << b.getScore() << "   WINS: " << wins << "     ";
 		init_pair(1, COLOR_RED, COLOR_BLACK);
 		attron(COLOR_PAIR(1));
 		addstr( "SCORE: " );
 		addstr( (ss.str()).c_str());
 		// Add High Score
 		ss.str("");
-		ss << highScore << "         ";
+		ss << "HIGHSCORE: "<<  highScore << "   " << "AVERAGE: ";
+		if (gameNumber > 1) ss <<  average/(gameNumber - 1);
+		else ss << 0;
+		ss << "        ";
 		move(score_y + 1, score_x);
-		addstr( "HIGHSCORE: " );
 		addstr( ss.str().c_str());
 
 		// Add GAme Number
 		ss.str("");
-		ss << "GAME NUMBER: " << gameNumber;
+
+		ss << "GAME " << gameNumber << " OF " << numberOfGames << "  ";
 		move(score_y + 2, score_x);
 		addstr(ss.str().c_str());
 
@@ -253,7 +268,7 @@ int main(int argc, const char* argv[]) {
 	/* Argument Parsing */
 	for (int i = 1; i < argc; i++) {
 		/* Human Play */
-		if ((strcmp(argv[i], "-p") == 0) || (strcmp(argv[i], "--human") == 0))
+		if ((strcmp(argv[i], "-H") == 0) || (strcmp(argv[i], "--human") == 0))
 			usingAI = false;
 		/* Store game in file argv[i+1] or default.gam */
 		if ((strcmp(argv[i], "-s") == 0) || (strcmp(argv[i], "--store") == 0)){
@@ -285,6 +300,27 @@ int main(int argc, const char* argv[]) {
 			if (i < argc - 1 && atoi(argv[++i]) >= 0) sleeptime = atoi(argv[i]);
 		if ((strcmp(argv[i], "-h" ) == 0) || (strcmp(argv[i], "--help") == 0))
 			help();
+		if ((strcmp(argv[i], "-d" ) == 0) || (strcmp(argv[i], "--depth") == 0 )){
+			if (i < argc - 1 && atoi(argv[++i]) >= 0) {
+				EVAL_DEPTH = atoi(argv[i]);
+				cout << EVAL_DEPTH << endl;
+			}
+			else return -1;
+		}
+		if ((strcmp(argv[i], "-b" ) == 0) || (strcmp(argv[i], "--break") == 0 ))
+			BREAK = true;
+		if ((strcmp(argv[i], "-a" ) == 0) || (strcmp(argv[i], "--automove") == 0 ))
+			if (i < argc - 1 && atoi(argv[++i]) >= 1) autoMoves = atoi(argv[i]);
+		if ((strcmp(argv[i], "-p" ) == 0) || (strcmp(argv[i], "--precise") == 0 ))
+			PRECISE_EVALUATION = true;
+		if ((strcmp(argv[i], "-m" ) == 0) || (strcmp(argv[i], "--mode") == 0 ))
+			if (++i < argc ){
+				if (strcmp(argv[i], "maxempties") == 0) evaluationMode = MAX_EMPTIES;
+				else if (strcmp(argv[i], "maxmerges") == 0) evaluationMode = MAX_MERGES;
+				else if (strcmp(argv[i], "bastard01") == 0) evaluationMode = BASTARD_01;
+				else evaluationMode = MAX_EMPTIES;
+			}
+
 	}
 
 	stringstream ss;
@@ -349,39 +385,25 @@ int main(int argc, const char* argv[]) {
 
 	/* AI Loop */
 	else if (usingAI) {
+
 		int currentScore;
 		for (gameNumber = 1;gameNumber <= numberOfGames; gameNumber++) {
 			currentScore = board.newGame();
 			if (currentScore > highScore) highScore = currentScore;
 			direction_t d;
 			while (true) {
+
 				d = rowfillAI.chooseMove(board);
 				if (usingCurses){
 					drawBoard(board);
-					//
-					// move(0,0);
-					// switch (d) {
-					// 	case UP:
-					// 	addstr("UP    ");
-					// 	break;
-					// 	case DOWN:
-					// 	addstr("DOWN  ");
-					// 	break;
-					// 	case LEFT:
-					// 	addstr("LEFT  ");
-					// 	break;
-					// 	case RIGHT:
-					// 	addstr("RIGHT ");
-					// 	break;
-					// 	default:
-					// 	addstr("NONE  ");
-					// 	break;
-					// }
 					refresh();
 					usleep(sleeptime);
 
 					board.move(d);
-					if (d == NONE) break;
+					if (d == NONE) {
+						if (BREAK) getch();
+						break;
+					}
 				} // if using ncurses
 				else {
 					char ch = 'd';
@@ -391,12 +413,18 @@ int main(int argc, const char* argv[]) {
 				}
 			} // while (True)
 			drawBoard(board);
+			average += board.getScore();
 			if (usingCurses)
 				refresh();
+			if (storingGame) {
+				board.toFile(storedGameName);
+			}
 
 		} // for game number loop
 		if (board.getScore() > highScore) highScore = board.getScore();
-		cout << highScore;
+		if (board.getHighestVal() >= 2048) ++wins;
+		refresh();
+
 		cin >> ch;
 	} // Using AI
 
@@ -448,5 +476,6 @@ int main(int argc, const char* argv[]) {
 	if (storingGame) board.toFile(storedGameName);
 	drawBoard(board);
 	endwin();
+	std::cout << EVAL_DEPTH << endl;
 	//delete[] EMPTY_STRING;
 }

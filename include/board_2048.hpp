@@ -8,10 +8,11 @@
 #include <stdlib.h>			// rand(), srand()
 #include <time.h>			// to seed srand()
 #include <vector>
+#include <algorithm>		// std::sort
 #include "board_t.hpp"
 #include "direction_t.hpp"
 #include "gameStorage.hpp"
-
+#include "globals.hpp"
 // Some enums to pass to various helper functions
 
 
@@ -52,9 +53,13 @@ public:
 	int column(int col, int row) const;
 	int row(int row, int col) const;
 	void setVal(int pos, int val);	// Set board value
+	std::vector<unsigned int> getSortedVals();
 	int getValInDir(int pos, direction_t dir) const;		// Get the value of board to left/right/up/down from pos
 	int getScore() const;
-
+	bool highValIsUnique();
+	bool isNormal();
+	int normality();
+	static bool reverseComp(int i, int j){ return (i > j); }
 
 	int numberOfMerges(direction_t dir) const;	// Get number of merges in direction_t dir
 	/* Check if row is ordered - ignore empty spaces
@@ -109,6 +114,7 @@ public:
 	void init();
 
 	void move(direction_t dir);
+	void moveNoSpawn(direction_t dir);
 };
 
 
