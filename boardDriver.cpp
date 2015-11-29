@@ -22,6 +22,7 @@
 #include "include/direction_t.hpp"
 #include "include/gamestate.hpp"
 #include "include/globals.hpp"
+#include "include/argparse.hpp"
 
 #include "AIs/AI.hpp"
 #include "AIs/rowFill.hpp"
@@ -36,33 +37,14 @@ int WIDTH = 4 * squareWidth + 2 * x_0;			/* Width of board */
 int HEIGHT = 4 * squareHeight + 2 * y_0;		/* Height of board */
 int score_y = 2, score_x = WIDTH/2;				/* Placement of scoreboard */
 
-/* Game Batch Statistics
- * These are for convenient reference while testing AIs
- */
-int wins = 0;						/* How many wins since beginning of batch */
-int highScore = 0;				/* Highest score since beginning of batch */
-unsigned int cummulativeScore = 0; 	/* Total cummulative score since start of batch */
-int numberOfGames = 1;			/* Number of games total in batch */
-int gameNumber = 0;				/* Current game */
-
-
-unsigned int sleeptime = 0;	/* Time to sleep between moves. Set to zero since
-										 * AI is inefficient.                             */
 
 char* EMPTY_STRING;				/* For creating empty strings while drawing board */
 stringstream ss;					/* Store Numbers and strings for nCurses output */
 
-/*** COMMAND LINE OPTIONS ***/
-bool usingAI = true;				/* Using AI to play game */
-bool usingCurses = true;		/* Using nCurses to display board */
-bool storingGame = false;		/* Storing game to output file */
-bool loadingFile = false;		/* Loading game */
-bool viewingFile = false;		/* Viewing a saved game */
-string storedGameName;			/* Location to save game */
-string viewedFileName = "storedGames/default.gam";		/* Location to load game for viewing */
-string loadedFileName = "storedGames/default.gam";		/* Location to load game for playing */
 
 rowfillAI rowfillAI;				/* Just temporary from an older build. Still in use */
+
+
 
 
 /* This draws the board without curses. No guarantees on
@@ -273,78 +255,14 @@ void initColorPairs() {
 
 /* Print Help function. Need to update functionality for
  *command line arguments */
-void help(){
-	cout << "2048 Help \n";
-	cout << "\t-h,            --help:           This help menu\n";
-	cout << "\t-s [FILENAME], --s [FILENAME]:   Store game to FILENAME on exit\n";
-	cout << "\t\tdefault FILENAME: 'storedGames/default.gam'\n";
-	cout << "\t-nc,          --nocurses:        Disable ncurses interface - buggy\n";
-	cout << "\t-v,           --viewgame:        Load a game for viewing - no play\n";
-	cout << "\t-l,           --loadgame:        Load a game for playing. Not implemented\n";
-	cout << "\t-n,           --numberofgames:   Number of games for AI to play\n";
-	cout << "\t-t,           --sleeptime:       Time between AI moves.\n";
-	exit(0);
-}
+
 
 /* This is very bloated. Will refactor. Largely uncommented for now.*/
 int main(int argc, const char* argv[]) {
+	char ch;
 	board_2048 board = board_2048();
-	/* Argument Parsing */
-	for (int i = 1; i < argc; i++) {
-		/* Human Play */
-		if ((strcmp(argv[i], "-H") == 0) || (strcmp(argv[i], "--human") == 0))
-			usingAI = false;
-		/* Store game in file argv[i+1] or default.gam */
-		if ((strcmp(argv[i], "-s") == 0) || (strcmp(argv[i], "--store") == 0)){
-			if (i < argc - 1)
-				storedGameName = string("storedGames/") + string(argv[++i]);
-			else storedGameName = "storedGames/default.gam";
-			storingGame = true;
-			board.turnStorageOn();
-		}
-		/* Disable ncurses */
-		if ((strcmp(argv[i], "-nc") == 0) || (strcmp(argv[i], "--nocurses") == 0))
-			usingCurses = false;
-		/* Load game for viewing (no play) */
-		if ((strcmp(argv[i], "-v" ) == 0) || (strcmp(argv[i], "--viewgame") == 0)) {
-			if (i < argc - 1) viewedFileName = argv[++i];
-			else viewedFileName = string("storedGames/") + string("default.gam");
-			viewingFile = true;
-		}
-		/* Load game */
-		if ((strcmp(argv[i], "-l" ) == 0) || (strcmp(argv[i], "--load") == 0 )) {
-			if (i < argc - 1) loadedFileName = argv[++i];
-			else loadedFileName = "storedGames/default.gam";
-			loadingFile = true;
-		}
-		if ((strcmp(argv[i], "-n" ) == 0) || (strcmp(argv[i], "--numberofgames") == 0 ))
-			if (i < argc - 1) numberOfGames = atoi(argv[++i]);
-
-		if ((strcmp(argv[i], "-t" ) == 0) || (strcmp(argv[i], "--sleeptime") == 0 ))
-			if (i < argc - 1 && atoi(argv[++i]) >= 0) sleeptime = atoi(argv[i]);
-		if ((strcmp(argv[i], "-h" ) == 0) || (strcmp(argv[i], "--help") == 0))
-			help();
-		if ((strcmp(argv[i], "-d" ) == 0) || (strcmp(argv[i], "--depth") == 0 )){
-			if (i < argc - 1 && atoi(argv[++i]) >= 0) {
-				EVAL_DEPTH = atoi(argv[i]);
-				cout << EVAL_DEPTH << endl;
-			}
-			else return -1;
-		}
-		if ((strcmp(argv[i], "-b" ) == 0) || (strcmp(argv[i], "--break") == 0 ))
-			BREAK = true;
-		if ((strcmp(argv[i], "-a" ) == 0) || (strcmp(argv[i], "--automove") == 0 ))
-			if (i < argc - 1 && atoi(argv[++i]) >= 1) autoMoves = atoi(argv[i]);
-		if ((strcmp(argv[i], "-p" ) == 0) || (strcmp(argv[i], "--precise") == 0 ))
-			PRECISE_EVALUATION = true;
-		if ((strcmp(argv[i], "-m" ) == 0) || (strcmp(argv[i], "--mode") == 0 ))
-			if (++i < argc ){
-				if (strcmp(argv[i], "maxempties") == 0) evaluationMode = MAX_EMPTIES;
-				else if (strcmp(argv[i], "maxmerges") == 0) evaluationMode = MAX_MERGES;
-				else if (strcmp(argv[i], "bastard01") == 0) evaluationMode = BASTARD_01;
-				else evaluationMode = MAX_EMPTIES;
-			}
-	} // End argParse for loop
+	parseArgs(argc, argv);
+	if (storingGame) board.turnStorageOn();
 
 	if (usingCurses){
 		board.init();
@@ -353,7 +271,6 @@ int main(int argc, const char* argv[]) {
 		attron(COLOR_PAIR(3));
 	}
 	bool repeat = true;
-	char ch;
 
 	/* Loading Game */
 	if (loadingFile) {
