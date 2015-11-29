@@ -8,21 +8,27 @@
 # double twosFactor               = 1.0;
 # double foursFactor              = 0.1;
 # double normalFactor             = 2.0;
-
+#
 # bool    PRECISE_EVALUATION      = false;
-
+#
 # int    autoMoves                = 5;
 # int MIN_EMPTIES                 = 4;
 # int EVAL_DEPTH 					= 2;
 #
 ###############################################################
-#            TRIALS OF 10
+#            			TRIALS OF 10
 # Starting:  					AVG 12777 	MAX 16000 (ish)
 # normalNotGridlocked -> 2.5:	AVG 8915 	MAX 16192
-# normalNotGridlocked -> 1.5:	AVG 8915 	MAX 16192
+# normalNotGridlocked -> 1.5:	AVG 8656 	MAX 16188
+# normalNotGridlocked -> 0.5:   AVG 9166    MAX 15988
 ################################################################
 
-double normalNotGridlocked      = 1.5;
+###############################################################
+#            			TRIALS OF 100
+# Starting:  					AVG 12777 	MAX 16000 (ish)
+###############################################################
+
+double normalNotGridlocked      = 4.5;
 double highValInCorner          = 4.7;
 double numberOfMergesFactor     = 0.5;
 double numberOfEmptiesFactor    = 1.2;
