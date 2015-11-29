@@ -10,11 +10,11 @@
  ***/
 #include <iostream>
 #include <string.h>
-#include <ncurses.h>								/* Display */
+#include <ncurses.h>			/* Display */
 #include <sstream>
 #include <unistd.h>
 #include <math.h>
-#include <stdlib.h>								/* exit() */
+#include <stdlib.h>			/* exit() */
 
 #include "include/board_2048.hpp"
 #include "include/board_t.hpp"
@@ -29,38 +29,38 @@
 
 using namespace std;
 /* nCurses variables */
-int y_0 = 6, x_0 = 10;			/* Top left of screen */
+int y_0 = 6, x_0 = 10;				/* Top left of screen */
 int squareWidth = 9;				/* Character width of a board square */
-int squareHeight = 4;			/* Character height of a board square */
-int WIDTH = 4 * squareWidth + 2 * x_0;			/* Width of board */
-int HEIGHT = 4 * squareHeight + 2 * y_0;		/* Height of board */
-int score_y = 2, score_x = WIDTH/2;				/* Placement of scoreboard */
+int squareHeight = 4;				/* Character height of a board square */
+int WIDTH = 4 * squareWidth + 2 * x_0;		/* Width of board */
+int HEIGHT = 4 * squareHeight + 2 * y_0;	/* Height of board */
+int score_y = 2, score_x = WIDTH/2;		/* Placement of scoreboard */
 
 /* Game Batch Statistics
  * These are for convenient reference while testing AIs
  */
-int wins = 0;						/* How many wins since beginning of batch */
+int wins = 0;					/* How many wins since beginning of batch */
 int highScore = 0;				/* Highest score since beginning of batch */
-unsigned int cummulativeScore = 0; 	/* Total cummulative score since start of batch */
-int numberOfGames = 1;			/* Number of games total in batch */
+unsigned int cummulativeScore = 0; 		/* Total cummulative score since start of batch */
+int numberOfGames = 1;				/* Number of games total in batch */
 int gameNumber = 0;				/* Current game */
 
 
-unsigned int sleeptime = 0;	/* Time to sleep between moves. Set to zero since
-										 * AI is inefficient.                             */
+unsigned int sleeptime = 0;			/* Time to sleep between moves. Set to zero since
+						 * AI is inefficient. */
 
 char* EMPTY_STRING;				/* For creating empty strings while drawing board */
-stringstream ss;					/* Store Numbers and strings for nCurses output */
+stringstream ss;				/* Store Numbers and strings for nCurses output */
 
 /*** COMMAND LINE OPTIONS ***/
 bool usingAI = true;				/* Using AI to play game */
-bool usingCurses = true;		/* Using nCurses to display board */
-bool storingGame = false;		/* Storing game to output file */
-bool loadingFile = false;		/* Loading game */
-bool viewingFile = false;		/* Viewing a saved game */
-string storedGameName;			/* Location to save game */
-string viewedFileName = "storedGames/default.gam";		/* Location to load game for viewing */
-string loadedFileName = "storedGames/default.gam";		/* Location to load game for playing */
+bool usingCurses = true;			/* Using nCurses to display board */
+bool storingGame = false;			/* Storing game to output file */
+bool loadingFile = false;			/* Loading game */
+bool viewingFile = false;			/* Viewing a saved game */
+string storedGameName;				/* Location to save game */
+string viewedFileName = "storedGames/default.gam";	/* Location to load game for viewing */
+string loadedFileName = "storedGames/default.gam";	/* Location to load game for playing */
 
 rowfillAI rowfillAI;				/* Just temporary from an older build. Still in use */
 
@@ -111,7 +111,7 @@ void drawSquare(int pos, board_2048& b) {
 	int x = x_0 + squareWidth * (pos % 4);
 
 	ss.str("");
-	if (b.getVal(pos) == 0) {		// Draw empty square
+	if (b.getVal(pos) == 0) {	// Draw empty square
 		move(y,x + 1);
 		addstr( EMPTY_STRING );
 		move(y + 1, x + 1);
@@ -119,7 +119,7 @@ void drawSquare(int pos, board_2048& b) {
 		move(y - 1, x + 1);
 		addstr( EMPTY_STRING );
 	}
-	else{									// Not empty
+	else{	// Not empty
 		int colorPairValue = (int) (log(b.getVal(pos)) / log(2));
 		if (colorPairValue < 0 || colorPairValue > 16) colorPairValue = 0;
 		if (b.getVal(pos) > 0 ) {
@@ -357,8 +357,8 @@ int main(int argc, const char* argv[]) {
 
 	/* Loading Game */
 	if (loadingFile) {
-		char ch;							// Hold user moves
-		bool repeat = true;			// Control display loop
+		char ch;			// Hold user moves
+		bool repeat = true;		// Control display loop
 		bool loadError = false;		// See if file failed to load
 		int currentScore = 0;		// Maybe unneeded?
 		board.loadFile(viewedFileName);
