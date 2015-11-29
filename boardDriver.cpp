@@ -37,42 +37,11 @@ int WIDTH = 4 * squareWidth + 2 * x_0;		/* Width of board */
 int HEIGHT = 4 * squareHeight + 2 * y_0;	/* Height of board */
 int score_y = 2, score_x = WIDTH/2;		/* Placement of scoreboard */
 
-<<<<<<< HEAD
-=======
-/* Game Batch Statistics
- * These are for convenient reference while testing AIs
- */
-int wins = 0;					/* How many wins since beginning of batch */
-int highScore = 0;				/* Highest score since beginning of batch */
-unsigned int cummulativeScore = 0; 		/* Total cummulative score since start of batch */
-int numberOfGames = 1;				/* Number of games total in batch */
-int gameNumber = 0;				/* Current game */
-
-
-unsigned int sleeptime = 0;			/* Time to sleep between moves. Set to zero since
-						 * AI is inefficient. */
->>>>>>> 2f9bb0b4d6dd1ed9240e792538f67d678de00d20
 
 char* EMPTY_STRING;				/* For creating empty strings while drawing board */
 stringstream ss;				/* Store Numbers and strings for nCurses output */
 
-<<<<<<< HEAD
-=======
-/*** COMMAND LINE OPTIONS ***/
-bool usingAI = true;				/* Using AI to play game */
-bool usingCurses = true;			/* Using nCurses to display board */
-bool storingGame = false;			/* Storing game to output file */
-bool loadingFile = false;			/* Loading game */
-bool viewingFile = false;			/* Viewing a saved game */
-string storedGameName;				/* Location to save game */
-string viewedFileName = "storedGames/default.gam";	/* Location to load game for viewing */
-string loadedFileName = "storedGames/default.gam";	/* Location to load game for playing */
->>>>>>> 2f9bb0b4d6dd1ed9240e792538f67d678de00d20
-
 rowfillAI rowfillAI;				/* Just temporary from an older build. Still in use */
-
-
-
 
 /* This draws the board without curses. No guarantees on
  * current state of this method - may not be functioning. Was for debugging
